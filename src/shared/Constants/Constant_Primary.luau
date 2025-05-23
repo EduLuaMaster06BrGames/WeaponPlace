@@ -4,7 +4,7 @@ local constant = {
 	ammo = {
 		current_ammo = 25,
 		mag_size = 25,
-		reserve_ammo = 200,
+		reserve_ammo = 25,
 	},
 	mode = "Auto",
 	type = "Primary",

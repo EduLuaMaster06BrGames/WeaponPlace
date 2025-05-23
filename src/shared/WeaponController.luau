@@ -93,7 +93,11 @@ function WeaponController:Reload()
 
 	if self:CanReload() then
 		print("CanReload")
-		self.constant.ammo.current_ammo = self:AmmoCost()
+		local ammoReceived = self:AmmoCost()
+		print("reserve: ", self.constant.ammo.reserve_ammo)
+		self.constant.ammo.current_ammo += ammoReceived
+		self.constant.ammo.reserve_ammo -= ammoReceived
+		print("reserve after: ", self.constant.ammo.reserve_ammo)
 		reloadEvent:InvokeServer()
 	end
 end
@@ -101,7 +105,7 @@ end
 function WeaponController:CanReload(): boolean
 	local ammoData = self.constant.ammo
 
-	if ammoData.current_ammo < ammoData.ammo.mag_size and ammoData.reserve_ammo > 0 then
+	if ammoData.current_ammo < ammoData.mag_size and ammoData.reserve_ammo > 0 then
 		return true
 	else
 		return false
@@ -113,17 +117,12 @@ function WeaponController:AmmoCost(): number
 	local ammoNeeded = ammoData.mag_size - ammoData.current_ammo
 
 	if ammoNeeded <= ammoData.reserve_ammo then
-		ammoData.reserve_ammo -= ammoNeeded
-		print("ReceivedAmmo: ", ammoNeeded)
 		return ammoNeeded
 	else
 		if ammoData.reserve_ammo ~= 0 then
 			local ammoLeft = ammoData.reserve_ammo
-			ammoData.reserve_ammo = 0
-			print("ReceivedAmmo: ", ammoLeft)
 			return ammoLeft
 		else
-			print("No ammo")
 			return 0
 		end
 	end
@@ -150,7 +149,6 @@ end
 function WeaponController:Shoot()
 	if self:CanShoot() then
 		self.constant.ammo.current_ammo -= 1
-		print("Ammo: ", self.constant.ammo.current_ammo)
 		local rayResult: RaycastResult = self:CastRay()
 
 		if rayResult and rayResult.Instance ~= nil then
@@ -164,7 +162,6 @@ function WeaponController:Shoot()
 					self:DamageTarget(false, targetHumanoid)
 				end
 			else
-				print("Ground Hit")
 				hitEvent:InvokeServer()
 			end
 		end
