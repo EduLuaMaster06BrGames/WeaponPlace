@@ -1,5 +1,6 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local weaponController = require(ReplicatedStorage.Shared.WeaponController)
 local constantPrimary = require(ReplicatedStorage.Shared.Constants.Constant_Primary)
@@ -7,6 +8,7 @@ local constantSecondary = require(ReplicatedStorage.Shared.Constants.Constant_Se
 
 local player = Players.LocalPlayer
 local mouse = player:GetMouse()
+local clicking = false
 
 local current_WeaponController = nil
 
@@ -33,8 +35,13 @@ function ChangeWeapon(keyCode: Enum.KeyCode)
 end
 
 function ManageMouseInput()
-	if current_WeaponController then
-		current_WeaponController:Shoot()
+	if clicking then
+		if current_WeaponController.constant.mode == "Auto" then
+			current_WeaponController:Shoot()
+		elseif current_WeaponController.constant.mode == "Semi" then
+			current_WeaponController:Shoot()
+			clicking = false
+		end
 	end
 end
 
@@ -45,5 +52,12 @@ end
 print("Charcater loaded")
 current_WeaponController = weaponController.new(constantPrimary)
 
-mouse.Button1Down:Connect(ManageMouseInput)
+mouse.Button1Down:Connect(function()
+	clicking = true
+end)
+mouse.Button1Up:Connect(function()
+	clicking = false
+end)
+
 UserInputService.InputBegan:Connect(ManageInput)
+RunService.RenderStepped:Connect(ManageMouseInput)

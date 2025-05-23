@@ -1,7 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local camera = workspace.CurrentCamera
-local viewmodels = ReplicatedStorage.Shared.Viewmodels
+local viewmodels = ReplicatedStorage.Viewmodels
 
 local ViewmodelController = {}
 ViewmodelController.__index = ViewmodelController
@@ -38,6 +38,7 @@ function ViewmodelController:Remove()
 
 	self.enabled = false
 	self.model.Parent = viewmodels
+	setmetatable(self, nil)
 end
 
 function ViewmodelController:SetPivot()

@@ -1,13 +1,14 @@
 local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+--local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ViewmodelController: {} = require(script.Parent.ViewmodelController)
+local UIController: {} = require(script.Parent.UIController)
 local player: Player = Players.LocalPlayer
 local camera: Camera = workspace.CurrentCamera
 
-local events = ReplicatedStorage.Shared.Events
-local damageEvent: RemoteFunction = events.OnDamage
-local hitEvent: RemoteFunction = events.OnHit
-local reloadEvent: RemoteFunction = events.OnReload
+--local events = ReplicatedStorage.Events
+-- local damageEvent: RemoteFunction = events.OnDamage
+-- local hitEvent: RemoteFunction = events.OnHit
+-- local reloadEvent: RemoteFunction = events.OnReload
 
 local GLOBAL_Range: number = 1000
 
@@ -22,6 +23,7 @@ export type Constant = {
 		mag_size: number,
 		reserve_ammo: number,
 	},
+	reload_time: number,
 	mode: string,
 	type: string,
 	multiplier: {
@@ -37,7 +39,9 @@ function WeaponController.new(constant: Constant)
 		on_cooldown = false,
 		on_draw = false,
 		enabled = false,
+		reload_task = nil,
 		viewmodel_module = {},
+		ui_module = {},
 	}
 
 	setmetatable(self, WeaponController)
@@ -48,16 +52,22 @@ end
 function WeaponController:Inicialize()
 	if self:IsAlive() then
 		self.enabled = true
-
-		print(self.constant)
-		print(self.constant.type)
 		self.viewmodel_module = ViewmodelController.new(self.constant.type)
+		self.ui_module = UIController.new(self.constant)
 	end
 end
 
 function WeaponController:Remove()
 	self.enabled = false
 	self.viewmodel_module:Remove()
+
+	if self.reload_task ~= nil then
+		print("reload cancelled")
+		task.cancel(self.reload_task)
+	end
+
+	setmetatable(self.ui_module, nil)
+	setmetatable(self, nil)
 end
 
 function WeaponController:IsAlive(): boolean
@@ -82,23 +92,26 @@ function WeaponController:DamageTarget(headShot: boolean, humanoidInstance: Huma
 	else
 		damageDealt *= self.constant.multiplier.body
 	end
-	damageEvent:InvokeServer(humanoidInstance, damageDealt)
+	--damageEvent:InvokeServer(humanoidInstance, damageDealt)
 	print("---")
 	print("DamageDealt: " .. tostring(damageDealt))
 	print("headShot: " .. tostring(headShot))
 end
 
 function WeaponController:Reload()
-	print("PreviousAmmo: ", self.constant.ammo.current_ammo)
-
 	if self:CanReload() then
-		print("CanReload")
 		local ammoReceived = self:AmmoCost()
-		print("reserve: ", self.constant.ammo.reserve_ammo)
-		self.constant.ammo.current_ammo += ammoReceived
-		self.constant.ammo.reserve_ammo -= ammoReceived
-		print("reserve after: ", self.constant.ammo.reserve_ammo)
-		reloadEvent:InvokeServer()
+
+		self.reload_task = task.delay(self.constant.reload_time, function()
+			if self.constant.type == "Primary" then
+				self.constant.ammo.reserve_ammo -= ammoReceived
+			end
+
+			self.constant.ammo.current_ammo += ammoReceived
+			self.ui_module:UpdateAmmoDisplay()
+			return nil
+		end)
+		--reloadEvent:InvokeServer()
 	end
 end
 
@@ -138,17 +151,32 @@ function WeaponController:HasAmmo(): boolean
 	end
 end
 
-function WeaponController:CanShoot(): boolean
-	if self:IsAlive() and self:HasAmmo() then
+function WeaponController:OnCooldown(): boolean
+	if self.on_cooldown then
 		return true
 	else
 		return false
 	end
 end
 
-function WeaponController:Shoot()
+function WeaponController:CanShoot(): boolean
+	if self:IsAlive() and self:HasAmmo() and not self:OnCooldown() then
+		return true
+	else
+		return false
+	end
+end
+
+function WeaponController:WasteAmmo()
+	self.constant.ammo.current_ammo -= 1
+end
+
+function WeaponController:Shoot(): boolean
 	if self:CanShoot() then
-		self.constant.ammo.current_ammo -= 1
+		self:SetCooldown()
+		self:WasteAmmo()
+		self.ui_module:UpdateAmmoDisplay()
+
 		local rayResult: RaycastResult = self:CastRay()
 
 		if rayResult and rayResult.Instance ~= nil then
@@ -162,10 +190,21 @@ function WeaponController:Shoot()
 					self:DamageTarget(false, targetHumanoid)
 				end
 			else
-				hitEvent:InvokeServer()
+				--hitEvent:InvokeServer()
 			end
 		end
+
+		return true
 	end
+
+	return false
+end
+
+function WeaponController:SetCooldown()
+	self.on_cooldown = true
+	task.delay(self.constant.speed, function()
+		self.on_cooldown = false
+	end)
 end
 
 return WeaponController
