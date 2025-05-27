@@ -2,6 +2,8 @@ local Players = game:GetService("Players")
 --local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ViewmodelController: {} = require(script.Parent.ViewmodelController)
 local UIController: {} = require(script.Parent.UIController)
+local RecoilController = require(script.Parent.RecoilController)
+
 local player: Player = Players.LocalPlayer
 local camera: Camera = workspace.CurrentCamera
 
@@ -23,6 +25,12 @@ export type Constant = {
 		mag_size: number,
 		reserve_ammo: number,
 	},
+	accuracy: {
+		min_accuracy: number,
+		max_accuracy: number,
+		recovery_rate: number,
+		recoil_rate: number,
+	},
 	reload_time: number,
 	mode: string,
 	type: string,
@@ -42,6 +50,7 @@ function WeaponController.new(constant: Constant)
 		reload_task = nil,
 		viewmodel_module = {},
 		ui_module = {},
+		recoil_module = {},
 	}
 
 	setmetatable(self, WeaponController)
@@ -54,12 +63,14 @@ function WeaponController:Inicialize()
 		self.enabled = true
 		self.viewmodel_module = ViewmodelController.new(self.constant.type)
 		self.ui_module = UIController.new(self.constant)
+		self.recoil_module = RecoilController.new(self.constant)
 	end
 end
 
 function WeaponController:Remove()
 	self.enabled = false
 	self.viewmodel_module:Remove()
+	self.recoil_module:Remove()
 
 	if self.reload_task ~= nil then
 		print("reload cancelled")
@@ -175,6 +186,7 @@ function WeaponController:Shoot(): boolean
 	if self:CanShoot() then
 		self:SetCooldown()
 		self:WasteAmmo()
+		self.recoil_module:AddRecoil()
 		self.ui_module:UpdateAmmoDisplay()
 
 		local rayResult: RaycastResult = self:CastRay()

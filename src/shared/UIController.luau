@@ -16,6 +16,12 @@ export type Constant = {
 		mag_size: number,
 		reserve_ammo: number,
 	},
+	accuracy: {
+		min_accuracy: number,
+		max_accuracy: number,
+		recovery_rate: number,
+		recoil_rate: number,
+	},
 	reload_time: number,
 	mode: string,
 	type: string,
