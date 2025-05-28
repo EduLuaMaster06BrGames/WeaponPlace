@@ -9,12 +9,11 @@ export type Constant = {
 		mag_size: number,
 		reserve_ammo: number,
 	},
-	accuracy: {
-		min_accuracy: number,
-		max_accuracy: number,
-		recovery_rate: number,
-		recoil_rate: number,
+	piersing: {
+		strength_loss: number,
+		amount: number,
 	},
+	accuracy: number,
 	reload_time: number,
 	mode: string,
 	type: string,
@@ -27,35 +26,46 @@ export type Constant = {
 function RecoilController.new(constant: Constant)
 	local self = {
 		constant = constant,
-		recovery_task = nil,
-		current_accuracy = constant.accuracy.min_accuracy,
 	}
 
 	setmetatable(self, RecoilController)
-	self.recovery_task = task.spawn(function()
-		self:NewRecoveryTask()
-	end)
 	return self
 end
 
 function RecoilController:Remove()
-	if self.recovery_task ~= nil then
-		task.cancel(self.recovery_task)
-	end
 	setmetatable(self, nil)
 end
 
-function RecoilController:AddRecoil()
-	self.current_accuracy =
-		math.min(self.current_accuracy + self.constant.accuracy.recoil_rate, self.constant.accuracy.max_accuracy)
+function RecoilController:GetBulletAccuracy(camera: Camera): Vector3
+	local accuracy_X: number = math.random(-self.constant.accuracy * 10, self.constant.accuracy * 10)
+	local accuracy_Y: number = math.random(-self.constant.accuracy * 10, self.constant.accuracy * 10)
+
+	local direction: Vector3 = camera.CFrame.LookVector
+	direction = RotateX(direction, accuracy_X / 10)
+	direction = RotateY(direction, accuracy_Y / 10)
+	direction = RotateZ(direction, 0)
+	return direction
 end
 
-function RecoilController:NewRecoveryTask()
-	while wait() do
-		self.current_accuracy =
-			math.max(self.current_accuracy - self.constant.accuracy.recovery_rate, self.constant.accuracy.min_accuracy)
-		print(self.current_accuracy)
-	end
+function RotateX(vec, angle)
+	local radians = math.rad(angle)
+	local cosAngle = math.cos(radians)
+	local sinAngle = math.sin(radians)
+	return Vector3.new(vec.X, vec.Y * cosAngle - vec.Z * sinAngle, vec.Y * sinAngle + vec.Z * cosAngle)
+end
+
+function RotateY(vec, angle)
+	local radians = math.rad(angle)
+	local cosAngle = math.cos(radians)
+	local sinAngle = math.sin(radians)
+	return Vector3.new(vec.X * cosAngle + vec.Z * sinAngle, vec.Y, -vec.X * sinAngle + vec.Z * cosAngle)
+end
+
+function RotateZ(vec, angle)
+	local radians = math.rad(angle)
+	local cosAngle = math.cos(radians)
+	local sinAngle = math.sin(radians)
+	return Vector3.new(vec.X * cosAngle - vec.Y * sinAngle, vec.X * sinAngle + vec.Y * cosAngle, vec.Z)
 end
 
 return RecoilController

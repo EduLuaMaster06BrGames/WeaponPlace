@@ -1,8 +1,12 @@
 local Players = game:GetService("Players")
---local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ViewmodelController: {} = require(script.Parent.ViewmodelController)
 local UIController: {} = require(script.Parent.UIController)
 local RecoilController = require(script.Parent.RecoilController)
+
+local viewmodels = ReplicatedStorage.Viewmodels
+local viewmodel_Primary = viewmodels.Viewmodel_Primary
+local viewmodel_Secondary = viewmodels.Viewmodel_Secondary
 
 local player: Player = Players.LocalPlayer
 local camera: Camera = workspace.CurrentCamera
@@ -25,12 +29,11 @@ export type Constant = {
 		mag_size: number,
 		reserve_ammo: number,
 	},
-	accuracy: {
-		min_accuracy: number,
-		max_accuracy: number,
-		recovery_rate: number,
-		recoil_rate: number,
+	piersing: {
+		strength_loss: number,
+		amount: number,
 	},
+	accuracy: number,
 	reload_time: number,
 	mode: string,
 	type: string,
@@ -89,11 +92,17 @@ function WeaponController:IsAlive(): boolean
 	end
 end
 
-function WeaponController:CastRay(): RaycastResult
+function WeaponController:CastRay(origin: Vector3, direction): RaycastResult
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Exclude
-	params.FilterDescendantsInstances = { self.character }
-	return workspace:Raycast(camera.CFrame.Position, camera.CFrame.LookVector * GLOBAL_Range)
+	params.FilterDescendantsInstances =
+		{ self.character, workspace.TestParts, viewmodel_Primary, viewmodel_Primary, viewmodel_Secondary }
+
+	if not direction then
+		direction = self.recoil_module:GetBulletAccuracy(camera)
+	end
+
+	return workspace:Raycast(origin, direction * GLOBAL_Range, params)
 end
 
 function WeaponController:DamageTarget(headShot: boolean, humanoidInstance: Humanoid)
@@ -186,30 +195,48 @@ function WeaponController:Shoot(): boolean
 	if self:CanShoot() then
 		self:SetCooldown()
 		self:WasteAmmo()
-		self.recoil_module:AddRecoil()
 		self.ui_module:UpdateAmmoDisplay()
 
-		local rayResult: RaycastResult = self:CastRay()
+		local piersingLeft = self.constant.piersing
+		local currentOrigin = camera.CFrame.Position
+		local currentDirection = nil
+		local ignorePrevious = {}
 
-		if rayResult and rayResult.Instance ~= nil then
-			local target = rayResult.Instance.Parent
-			local targetHumanoid: Humanoid = target:FindFirstChild("Humanoid")
+		repeat
+			local rayResult: RaycastResult = self:CastRay(currentOrigin, currentDirection)
 
-			if targetHumanoid then
-				if rayResult.Instance.Name == "Head" then
-					self:DamageTarget(true, targetHumanoid)
+			if rayResult and rayResult.Instance ~= nil then
+				local target = rayResult.Instance.Parent
+				local targetHumanoid: Humanoid = target:FindFirstChild("Humanoid")
+
+				if targetHumanoid then
+					currentOrigin = rayResult.Position
+
+					if rayResult.Instance.Name == "Head" then
+						self:DamageTarget(true, targetHumanoid)
+					else
+						self:DamageTarget(false, targetHumanoid)
+					end
 				else
-					self:DamageTarget(false, targetHumanoid)
+					--hitEvent:InvokeServer()
 				end
 			else
-				--hitEvent:InvokeServer()
+				piersingLeft = 0
 			end
-		end
+		until piersingLeft == 0
 
 		return true
 	end
 
 	return false
+end
+
+function WeaponController:DEBUG_PART(pos: Vector3)
+	local testPart = Instance.new("Part", workspace:WaitForChild("TestParts"))
+	testPart.Size = Vector3.new(0.5, 0.5, 0.5)
+	testPart.Anchored = true
+	testPart.Color = Color3.fromRGB(255, 0, 0)
+	testPart.Position = pos
 end
 
 function WeaponController:SetCooldown()

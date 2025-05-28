@@ -6,12 +6,11 @@ local constant = {
 		mag_size = 12,
 		reserve_ammo = math.huge,
 	},
-	accuracy = {
-		min_accuracy = 0,
-		max_accuracy = 0,
-		recovery_rate = 0,
-		recoil_rate = 0,
+	piersing = {
+		strength_loss = 0.75,
+		amount = 0,
 	},
+	accuracy = 0.75,
 	reload_time = 0.5,
 	mode = "Semi",
 	type = "Secondary",
