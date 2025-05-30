@@ -21,7 +21,7 @@ local GLOBAL_Range: number = 1000
 local WeaponController = {}
 WeaponController.__index = WeaponController
 
-export type Constant = {
+type Constant = {
 	damage: number,
 	speed: number,
 	ammo: {
@@ -41,6 +41,11 @@ export type Constant = {
 		head: number,
 		body: number,
 	},
+}
+
+type RaycastInfo = {
+	result: RaycastResult,
+	current_direction: Vector3,
 }
 
 function WeaponController.new(constant: Constant)
@@ -92,30 +97,42 @@ function WeaponController:IsAlive(): boolean
 	end
 end
 
-function WeaponController:CastRay(origin: Vector3, direction): RaycastResult
+function WeaponController:CastRay(origin: Vector3, direction, ignorePrevious: {}): RaycastInfo
 	local params = RaycastParams.new()
 	params.FilterType = Enum.RaycastFilterType.Exclude
-	params.FilterDescendantsInstances =
-		{ self.character, workspace.TestParts, viewmodel_Primary, viewmodel_Primary, viewmodel_Secondary }
+	params.FilterDescendantsInstances = {
+		self.character,
+		workspace.TestParts,
+		viewmodel_Primary,
+		viewmodel_Primary,
+		viewmodel_Secondary,
+		ignorePrevious,
+	}
 
 	if not direction then
 		direction = self.recoil_module:GetBulletAccuracy(camera)
 	end
 
-	return workspace:Raycast(origin, direction * GLOBAL_Range, params)
+	return {
+		result = workspace:Raycast(origin, direction * GLOBAL_Range, params),
+		current_direction = direction,
+	}
 end
 
-function WeaponController:DamageTarget(headShot: boolean, humanoidInstance: Humanoid)
+function WeaponController:DamageTarget(headShot: boolean, humanoidInstance: Humanoid, enemiesPiersed: number)
 	local damageDealt = self.constant.damage
+
+	for i = 1, enemiesPiersed do
+		damageDealt -= damageDealt * self.constant.piersing.strength_loss
+	end
+
 	if headShot then
 		damageDealt *= self.constant.multiplier.head
 	else
 		damageDealt *= self.constant.multiplier.body
 	end
+
 	--damageEvent:InvokeServer(humanoidInstance, damageDealt)
-	print("---")
-	print("DamageDealt: " .. tostring(damageDealt))
-	print("headShot: " .. tostring(headShot))
 end
 
 function WeaponController:Reload()
@@ -197,33 +214,37 @@ function WeaponController:Shoot(): boolean
 		self:WasteAmmo()
 		self.ui_module:UpdateAmmoDisplay()
 
-		local piersingLeft = self.constant.piersing
+		local piersingLeft = self.constant.piersing.amount
 		local currentOrigin = camera.CFrame.Position
 		local currentDirection = nil
 		local ignorePrevious = {}
 
 		repeat
-			local rayResult: RaycastResult = self:CastRay(currentOrigin, currentDirection)
+			local rayInfo: RaycastInfo = self:CastRay(currentOrigin, currentDirection, ignorePrevious)
 
-			if rayResult and rayResult.Instance ~= nil then
-				local target = rayResult.Instance.Parent
+			if rayInfo.result and rayInfo.result.Instance ~= nil then
+				local target = rayInfo.result.Instance.Parent
 				local targetHumanoid: Humanoid = target:FindFirstChild("Humanoid")
 
 				if targetHumanoid then
-					currentOrigin = rayResult.Position
+					local enemiesPiersed = self.constant.piersing.amount - piersingLeft
+					currentOrigin = rayInfo.result.Position
+					table.insert(ignorePrevious, target)
 
-					if rayResult.Instance.Name == "Head" then
-						self:DamageTarget(true, targetHumanoid)
+					if rayInfo.result.Instance.Name == "Head" then
+						self:DamageTarget(true, targetHumanoid, enemiesPiersed)
+						piersingLeft -= 1
 					else
-						self:DamageTarget(false, targetHumanoid)
+						self:DamageTarget(false, targetHumanoid, enemiesPiersed)
+						piersingLeft -= 1
 					end
 				else
-					--hitEvent:InvokeServer()
+					piersingLeft = 0
 				end
 			else
 				piersingLeft = 0
 			end
-		until piersingLeft == 0
+		until piersingLeft <= 0
 
 		return true
 	end

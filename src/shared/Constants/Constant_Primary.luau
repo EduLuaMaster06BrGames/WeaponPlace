@@ -7,8 +7,8 @@ local constant = {
 		reserve_ammo = 200,
 	},
 	piersing = {
-		strength_loss = 0.75,
-		amount = 0,
+		strength_loss = 0.25,
+		amount = 4,
 	},
 	accuracy = 2,
 	reload_time = 1,
