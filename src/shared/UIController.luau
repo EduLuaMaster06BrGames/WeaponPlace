@@ -1,4 +1,5 @@
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local player = Players.LocalPlayer
 local playerGUI = player.PlayerGui
 local weaponUI = playerGUI:WaitForChild("WeaponUI")
@@ -8,32 +9,12 @@ local secondaryDisplay: TextLabel = ammoUI.MainFrame:FindFirstChild("SecondaryDi
 local ammoDisplay: TextLabel = ammoUI.MainFrame:FindFirstChild("AmmoDisplay")
 local reserveAmmoDisplay: TextLabel = ammoUI.MainFrame:FindFirstChild("ReserveAmmoDisplay")
 
-export type Constant = {
-	damage: number,
-	speed: number,
-	ammo: {
-		current_ammo: number,
-		mag_size: number,
-		reserve_ammo: number,
-	},
-	piersing: {
-		strength_loss: number,
-		amount: number,
-	},
-	accuracy: number,
-	reload_time: number,
-	mode: string,
-	type: string,
-	multiplier: {
-		head: number,
-		body: number,
-	},
-}
+local constType = require(ReplicatedStorage.Shared.Constants.ConstantType)
 
 local UIController = {}
 UIController.__index = UIController
 
-function UIController.new(constant: Constant)
+function UIController.new(constant: constType.Constant)
 	local self = {
 		constant = constant,
 	}
@@ -64,7 +45,7 @@ function UIController:SetWeaponDisplay()
 	end
 end
 
-function UIController:UpdateConstant(newConstant: Constant)
+function UIController:UpdateConstant(newConstant: constType.Constant)
 	self.constant = newConstant
 	self:SetWeaponDisplay()
 	self:UpdateAmmoDisplay()

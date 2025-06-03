@@ -4,6 +4,8 @@ local ViewmodelController: {} = require(script.Parent.ViewmodelController)
 local UIController: {} = require(script.Parent.UIController)
 local RecoilController = require(script.Parent.RecoilController)
 
+local constType = require(ReplicatedStorage.Shared.Constants.ConstantType)
+
 local viewmodels = ReplicatedStorage.Viewmodels
 local viewmodel_Primary = viewmodels.Viewmodel_Primary
 local viewmodel_Secondary = viewmodels.Viewmodel_Secondary
@@ -11,8 +13,8 @@ local viewmodel_Secondary = viewmodels.Viewmodel_Secondary
 local player: Player = Players.LocalPlayer
 local camera: Camera = workspace.CurrentCamera
 
---local events = ReplicatedStorage.Events
--- local damageEvent: RemoteFunction = events.OnDamage
+local events = ReplicatedStorage.Events
+local damageEvent: RemoteFunction = events.OnDamage
 -- local hitEvent: RemoteFunction = events.OnHit
 -- local reloadEvent: RemoteFunction = events.OnReload
 
@@ -21,37 +23,16 @@ local GLOBAL_Range: number = 1000
 local WeaponController = {}
 WeaponController.__index = WeaponController
 
-type Constant = {
-	damage: number,
-	speed: number,
-	ammo: {
-		current_ammo: number,
-		mag_size: number,
-		reserve_ammo: number,
-	},
-	piersing: {
-		strength_loss: number,
-		amount: number,
-	},
-	accuracy: number,
-	reload_time: number,
-	mode: string,
-	type: string,
-	multiplier: {
-		head: number,
-		body: number,
-	},
-}
-
 type RaycastInfo = {
 	result: RaycastResult,
 	current_direction: Vector3,
 }
 
-function WeaponController.new(constant: Constant)
+function WeaponController.new(constant: constType.Constant)
 	local self = {
 		constant = constant,
 		character = player.Character,
+		on_reload = false,
 		on_cooldown = false,
 		on_draw = false,
 		enabled = false,
@@ -72,6 +53,7 @@ function WeaponController:Inicialize()
 		self.viewmodel_module = ViewmodelController.new(self.constant.type)
 		self.ui_module = UIController.new(self.constant)
 		self.recoil_module = RecoilController.new(self.constant)
+		self:DrawWeapon()
 	end
 end
 
@@ -87,6 +69,14 @@ function WeaponController:Remove()
 
 	setmetatable(self.ui_module, nil)
 	setmetatable(self, nil)
+end
+
+function WeaponController:DrawWeapon()
+	print("Draw Started")
+	self.on_draw = true
+	wait(self.constant.draw_time)
+	self.on_draw = false
+	print("Draw Ended")
 end
 
 function WeaponController:IsAlive(): boolean
@@ -132,11 +122,12 @@ function WeaponController:DamageTarget(headShot: boolean, humanoidInstance: Huma
 		damageDealt *= self.constant.multiplier.body
 	end
 
-	--damageEvent:InvokeServer(humanoidInstance, damageDealt)
+	damageEvent:InvokeServer(humanoidInstance, damageDealt, self.constant)
 end
 
 function WeaponController:Reload()
 	if self:CanReload() then
+		self.on_reload = true
 		local ammoReceived = self:AmmoCost()
 
 		self.reload_task = task.delay(self.constant.reload_time, function()
@@ -145,17 +136,24 @@ function WeaponController:Reload()
 			end
 
 			self.constant.ammo.current_ammo += ammoReceived
+			self.on_reload = false
 			self.ui_module:UpdateAmmoDisplay()
-			return nil
+			self.reload_task = nil
 		end)
-		--reloadEvent:InvokeServer()
 	end
 end
 
 function WeaponController:CanReload(): boolean
 	local ammoData = self.constant.ammo
 
-	if ammoData.current_ammo < ammoData.mag_size and ammoData.reserve_ammo > 0 then
+	print(self.reload_task)
+
+	if
+		ammoData.current_ammo < ammoData.mag_size
+		and ammoData.reserve_ammo > 0
+		and self.reload_task == nil
+		and not self.on_draw
+	then
 		return true
 	else
 		return false
@@ -197,7 +195,7 @@ function WeaponController:OnCooldown(): boolean
 end
 
 function WeaponController:CanShoot(): boolean
-	if self:IsAlive() and self:HasAmmo() and not self:OnCooldown() then
+	if self:IsAlive() and self:HasAmmo() and not self:OnCooldown() and not self.on_reload and not self.on_draw then
 		return true
 	else
 		return false
@@ -214,37 +212,41 @@ function WeaponController:Shoot(): boolean
 		self:WasteAmmo()
 		self.ui_module:UpdateAmmoDisplay()
 
-		local piersingLeft = self.constant.piersing.amount
-		local currentOrigin = camera.CFrame.Position
-		local currentDirection = nil
-		local ignorePrevious = {}
+		for i = 1, self.constant.pellets do
+			local piersingLeft = self.constant.piersing.amount
+			local currentOrigin = camera.CFrame.Position
+			local currentDirection = nil
+			local ignorePrevious = {}
 
-		repeat
-			local rayInfo: RaycastInfo = self:CastRay(currentOrigin, currentDirection, ignorePrevious)
+			repeat
+				local rayInfo: RaycastInfo = self:CastRay(currentOrigin, currentDirection, ignorePrevious)
 
-			if rayInfo.result and rayInfo.result.Instance ~= nil then
-				local target = rayInfo.result.Instance.Parent
-				local targetHumanoid: Humanoid = target:FindFirstChild("Humanoid")
+				if rayInfo.result and rayInfo.result.Instance ~= nil then
+					self:DEBUG_PART(rayInfo.result.Position)
 
-				if targetHumanoid then
-					local enemiesPiersed = self.constant.piersing.amount - piersingLeft
-					currentOrigin = rayInfo.result.Position
-					table.insert(ignorePrevious, target)
+					local target = rayInfo.result.Instance.Parent
+					local targetHumanoid: Humanoid = target:FindFirstChild("Humanoid")
 
-					if rayInfo.result.Instance.Name == "Head" then
-						self:DamageTarget(true, targetHumanoid, enemiesPiersed)
-						piersingLeft -= 1
+					if targetHumanoid then
+						local enemiesPiersed = self.constant.piersing.amount - piersingLeft
+						currentOrigin = rayInfo.result.Position
+						table.insert(ignorePrevious, target)
+
+						if rayInfo.result.Instance.Name == "Head" then
+							self:DamageTarget(true, targetHumanoid, enemiesPiersed)
+							piersingLeft -= 1
+						else
+							self:DamageTarget(false, targetHumanoid, enemiesPiersed)
+							piersingLeft -= 1
+						end
 					else
-						self:DamageTarget(false, targetHumanoid, enemiesPiersed)
-						piersingLeft -= 1
+						piersingLeft = 0
 					end
 				else
 					piersingLeft = 0
 				end
-			else
-				piersingLeft = 0
-			end
-		until piersingLeft <= 0
+			until piersingLeft <= 0
+		end
 
 		return true
 	end

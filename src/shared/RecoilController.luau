@@ -1,29 +1,10 @@
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RecoilController = {}
 RecoilController.__index = RecoilController
 
-export type Constant = {
-	damage: number,
-	speed: number,
-	ammo: {
-		current_ammo: number,
-		mag_size: number,
-		reserve_ammo: number,
-	},
-	piersing: {
-		strength_loss: number,
-		amount: number,
-	},
-	accuracy: number,
-	reload_time: number,
-	mode: string,
-	type: string,
-	multiplier: {
-		head: number,
-		body: number,
-	},
-}
+local constType = require(ReplicatedStorage.Shared.Constants.ConstantType)
 
-function RecoilController.new(constant: Constant)
+function RecoilController.new(constant: constType.Constant)
 	local self = {
 		constant = constant,
 	}
