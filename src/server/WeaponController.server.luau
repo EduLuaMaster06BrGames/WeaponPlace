@@ -2,7 +2,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local events = ReplicatedStorage.Events
 local damageEvent: RemoteFunction = events.OnDamage
 
-local constType = require(ReplicatedStorage.Shared.Constants.ConstantType)
+local constType = require(ReplicatedStorage.Shared.Types.WeaponConstantType)
 
 damageEvent.OnServerInvoke = function(
 	player: Player,
@@ -27,7 +27,6 @@ end
 
 function CritHit(weaponConstant: constType.Constant): boolean
 	local rng = math.random(1, 100)
-	print(rng)
 	if rng <= weaponConstant.crit_chance then
 		return true
 	else

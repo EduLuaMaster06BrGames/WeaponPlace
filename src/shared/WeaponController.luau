@@ -4,7 +4,7 @@ local ViewmodelController: {} = require(script.Parent.ViewmodelController)
 local UIController: {} = require(script.Parent.UIController)
 local RecoilController = require(script.Parent.RecoilController)
 
-local constType = require(ReplicatedStorage.Shared.Constants.ConstantType)
+local constType = require(ReplicatedStorage.Shared.Types.WeaponConstantType)
 
 local viewmodels = ReplicatedStorage.Viewmodels
 local viewmodel_Primary = viewmodels.Viewmodel_Primary
@@ -12,6 +12,8 @@ local viewmodel_Secondary = viewmodels.Viewmodel_Secondary
 
 local player: Player = Players.LocalPlayer
 local camera: Camera = workspace.CurrentCamera
+
+local test = require(ReplicatedStorage.Shared.Humanoid.Constant_Humanoid)
 
 local events = ReplicatedStorage.Events
 local damageEvent: RemoteFunction = events.OnDamage
@@ -53,7 +55,9 @@ function WeaponController:Inicialize()
 		self.viewmodel_module = ViewmodelController.new(self.constant.type)
 		self.ui_module = UIController.new(self.constant)
 		self.recoil_module = RecoilController.new(self.constant)
-		self:DrawWeapon()
+		task.spawn(function()
+			self:DrawWeapon()
+		end)
 	end
 end
 
@@ -63,7 +67,6 @@ function WeaponController:Remove()
 	self.recoil_module:Remove()
 
 	if self.reload_task ~= nil then
-		print("reload cancelled")
 		task.cancel(self.reload_task)
 	end
 
@@ -72,11 +75,9 @@ function WeaponController:Remove()
 end
 
 function WeaponController:DrawWeapon()
-	print("Draw Started")
 	self.on_draw = true
 	wait(self.constant.draw_time)
 	self.on_draw = false
-	print("Draw Ended")
 end
 
 function WeaponController:IsAlive(): boolean
@@ -145,8 +146,6 @@ end
 
 function WeaponController:CanReload(): boolean
 	local ammoData = self.constant.ammo
-
-	print(self.reload_task)
 
 	if
 		ammoData.current_ammo < ammoData.mag_size

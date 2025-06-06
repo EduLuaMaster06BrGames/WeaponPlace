@@ -2,7 +2,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RecoilController = {}
 RecoilController.__index = RecoilController
 
-local constType = require(ReplicatedStorage.Shared.Constants.ConstantType)
+local constType = require(ReplicatedStorage.Shared.Types.WeaponConstantType)
 
 function RecoilController.new(constant: constType.Constant)
 	local self = {
@@ -20,11 +20,12 @@ end
 function RecoilController:GetBulletAccuracy(camera: Camera): Vector3
 	local accuracy_X: number = math.random(-self.constant.accuracy * 10, self.constant.accuracy * 10)
 	local accuracy_Y: number = math.random(-self.constant.accuracy * 10, self.constant.accuracy * 10)
+	local accuracy_Z: number = math.random(-self.constant.accuracy * 10, self.constant.accuracy * 10)
 
 	local direction: Vector3 = camera.CFrame.LookVector
 	direction = RotateX(direction, accuracy_X / 10)
 	direction = RotateY(direction, accuracy_Y / 10)
-	direction = RotateZ(direction, 0)
+	direction = RotateZ(direction, accuracy_Z / 10)
 	return direction
 end
 

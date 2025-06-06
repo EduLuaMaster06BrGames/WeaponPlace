@@ -9,7 +9,7 @@ local secondaryDisplay: TextLabel = ammoUI.MainFrame:FindFirstChild("SecondaryDi
 local ammoDisplay: TextLabel = ammoUI.MainFrame:FindFirstChild("AmmoDisplay")
 local reserveAmmoDisplay: TextLabel = ammoUI.MainFrame:FindFirstChild("ReserveAmmoDisplay")
 
-local constType = require(ReplicatedStorage.Shared.Constants.ConstantType)
+local constType = require(ReplicatedStorage.Shared.Types.WeaponConstantType)
 
 local UIController = {}
 UIController.__index = UIController
