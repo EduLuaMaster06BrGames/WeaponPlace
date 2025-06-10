@@ -1,5 +1,6 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
 local player = Players.LocalPlayer
 local playerGUI = player.PlayerGui
 local weaponUI = playerGUI:WaitForChild("WeaponUI")
@@ -9,14 +10,16 @@ local secondaryDisplay: TextLabel = ammoUI.MainFrame:FindFirstChild("SecondaryDi
 local ammoDisplay: TextLabel = ammoUI.MainFrame:FindFirstChild("AmmoDisplay")
 local reserveAmmoDisplay: TextLabel = ammoUI.MainFrame:FindFirstChild("ReserveAmmoDisplay")
 
-local constType = require(ReplicatedStorage.Shared.Types.WeaponConstantType)
+local constType = require(ReplicatedStorage.Shared.Hero.Types.WeaponConstantType)
+type Constant = constType.Constant
 
 local UIController = {}
 UIController.__index = UIController
 
-function UIController.new(constant: constType.Constant)
+function UIController.new(constant: Constant)
 	local self = {
 		constant = constant,
+		humanoid_listener_id = "",
 	}
 
 	setmetatable(self, UIController)
@@ -56,5 +59,7 @@ function UIController:Remove()
 	ammoUI.Enabled = false
 	setmetatable(self, nil)
 end
+
+function UIController.UpdateHealthUI(_, newValue: number) end
 
 return UIController

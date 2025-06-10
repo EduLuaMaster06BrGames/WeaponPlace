@@ -1,10 +1,11 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Constant_Humanoid = require(ReplicatedStorage.Shared.Hero.Humanoid.Constant_Humanoid)
 local ViewmodelController: {} = require(script.Parent.ViewmodelController)
 local UIController: {} = require(script.Parent.UIController)
 local RecoilController = require(script.Parent.RecoilController)
 
-local constType = require(ReplicatedStorage.Shared.Types.WeaponConstantType)
+local constType = require(ReplicatedStorage.Shared.Hero.Types.WeaponConstantType)
 
 local viewmodels = ReplicatedStorage.Viewmodels
 local viewmodel_Primary = viewmodels.Viewmodel_Primary
@@ -12,8 +13,6 @@ local viewmodel_Secondary = viewmodels.Viewmodel_Secondary
 
 local player: Player = Players.LocalPlayer
 local camera: Camera = workspace.CurrentCamera
-
-local test = require(ReplicatedStorage.Shared.Humanoid.Constant_Humanoid)
 
 local events = ReplicatedStorage.Events
 local damageEvent: RemoteFunction = events.OnDamage
@@ -118,8 +117,10 @@ function WeaponController:DamageTarget(headShot: boolean, humanoidInstance: Huma
 	end
 
 	if headShot then
+		Constant_Humanoid.MaxHealth += 5
 		damageDealt *= self.constant.multiplier.head
 	else
+		Constant_Humanoid.BaseRegen += 0.1
 		damageDealt *= self.constant.multiplier.body
 	end
 

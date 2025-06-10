@@ -2,9 +2,9 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
-local weaponController = require(ReplicatedStorage.Shared.WeaponController)
-local constantPrimary = require(ReplicatedStorage.Shared.Weapon.Constant_Primary)
-local constantSecondary = require(ReplicatedStorage.Shared.Weapon.Constant_Secondary)
+local weaponController = require(ReplicatedStorage.Shared.Hero.WeaponController)
+local constantPrimary = require(ReplicatedStorage.Shared.Hero.Weapon.Constant_Primary)
+local constantSecondary = require(ReplicatedStorage.Shared.Hero.Weapon.Constant_Secondary)
 
 local player = Players.LocalPlayer
 local mouse = player:GetMouse()

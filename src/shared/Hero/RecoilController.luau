@@ -2,7 +2,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RecoilController = {}
 RecoilController.__index = RecoilController
 
-local constType = require(ReplicatedStorage.Shared.Types.WeaponConstantType)
+local constType = require(ReplicatedStorage.Shared.Hero.Types.WeaponConstantType)
 
 function RecoilController.new(constant: constType.Constant)
 	local self = {
