@@ -30,12 +30,12 @@ end
 function UIController:Inicialize()
 	ammoUI.Enabled = true
 	self:SetWeaponDisplay()
-	self:UpdateAmmoDisplay()
+	self.UpdateAmmoDisplay(self.constant)
 end
 
-function UIController:UpdateAmmoDisplay()
-	ammoDisplay.Text = tostring(self.constant.ammo.current_ammo) .. "/" .. tostring(self.constant.ammo.mag_size)
-	reserveAmmoDisplay.Text = tostring(self.constant.ammo.reserve_ammo)
+function UIController.UpdateAmmoDisplay(constant)
+	ammoDisplay.Text = tostring(constant.ammo.current_ammo) .. "/" .. tostring(constant.ammo.mag_size)
+	reserveAmmoDisplay.Text = tostring(constant.ammo.reserve_ammo)
 end
 
 function UIController:SetWeaponDisplay()
@@ -51,7 +51,7 @@ end
 function UIController:UpdateConstant(newConstant: constType.Constant)
 	self.constant = newConstant
 	self:SetWeaponDisplay()
-	self:UpdateAmmoDisplay()
+	self.UpdateAmmoDisplay(self.constant)
 end
 
 function UIController:Remove()

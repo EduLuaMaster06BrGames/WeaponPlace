@@ -1,23 +1,29 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Constant_Humanoid = require(ReplicatedStorage.Shared.Hero.Humanoid.Constant_Humanoid)
-local ViewmodelController: {} = require(script.Parent.ViewmodelController)
+local ViewmodelController: {} = require(script.Parent.WeaponViewmodelController)
 local UIController: {} = require(script.Parent.UIController)
 local RecoilController = require(script.Parent.RecoilController)
+local weaponBuffs = require(script.Parent.WeaponBuffList)
 
 local constType = require(ReplicatedStorage.Shared.Hero.Types.WeaponConstantType)
 
 local viewmodels = ReplicatedStorage.Viewmodels
-local viewmodel_Primary = viewmodels.Viewmodel_Primary
-local viewmodel_Secondary = viewmodels.Viewmodel_Secondary
+local viewmodel_Primary = viewmodels.Weapon.Viewmodel_Primary
+local viewmodel_Secondary = viewmodels.Weapon.Viewmodel_Secondary
 
 local player: Player = Players.LocalPlayer
 local camera: Camera = workspace.CurrentCamera
 
+local localEvents = ReplicatedStorage.Shared.Events
+local reloadEventListeners = require(localEvents.ReloadEvent_Listeners)
+local shotEventListeners = require(localEvents.ShotEvent_Listeners)
+
+type ReloadData = reloadEventListeners.ReloadData
+type ShotData = shotEventListeners.ShotData
+type Listener = shotEventListeners.Listener
+
 local events = ReplicatedStorage.Events
 local damageEvent: RemoteFunction = events.OnDamage
--- local hitEvent: RemoteFunction = events.OnHit
--- local reloadEvent: RemoteFunction = events.OnReload
 
 local GLOBAL_Range: number = 1000
 
@@ -41,6 +47,7 @@ function WeaponController.new(constant: constType.Constant)
 		viewmodel_module = {},
 		ui_module = {},
 		recoil_module = {},
+		buffList = {},
 	}
 
 	setmetatable(self, WeaponController)
@@ -50,10 +57,16 @@ end
 
 function WeaponController:Inicialize()
 	if self:IsAlive() then
+		if self.constant.type == "Primary" then
+			self.buffList = weaponBuffs.primaryWeapon
+		else
+			self.buffList = weaponBuffs.secondaryWeapon
+		end
+
 		self.enabled = true
 		self.viewmodel_module = ViewmodelController.new(self.constant.type)
 		self.ui_module = UIController.new(self.constant)
-		self.recoil_module = RecoilController.new(self.constant)
+		self.recoil_module = RecoilController.new(self.constant, self.buffList)
 		task.spawn(function()
 			self:DrawWeapon()
 		end)
@@ -75,7 +88,7 @@ end
 
 function WeaponController:DrawWeapon()
 	self.on_draw = true
-	wait(self.constant.draw_time)
+	wait(self.constant.draw_time * self.buffList.draw_time)
 	self.on_draw = false
 end
 
@@ -109,22 +122,34 @@ function WeaponController:CastRay(origin: Vector3, direction, ignorePrevious: {}
 	}
 end
 
-function WeaponController:DamageTarget(headShot: boolean, humanoidInstance: Humanoid, enemiesPiersed: number)
-	local damageDealt = self.constant.damage
+function WeaponController:DamageTarget(
+	headShot: boolean,
+	humanoidInstance: Humanoid,
+	enemiesPiersed: number,
+	hitPos: Vector3
+)
+	local damageDealt = self.constant.damage * self.buffList.damage
 
 	for i = 1, enemiesPiersed do
-		damageDealt -= damageDealt * self.constant.piersing.strength_loss
+		damageDealt -= damageDealt * self.constant.piersing.strength_loss * self.buffList.piersing.strength_loss
 	end
 
 	if headShot then
-		Constant_Humanoid.MaxHealth += 5
-		damageDealt *= self.constant.multiplier.head
+		damageDealt *= self.constant.multiplier.head + self.buffList.multiplier.head
 	else
-		Constant_Humanoid.BaseRegen += 0.1
 		damageDealt *= self.constant.multiplier.body
 	end
 
-	damageEvent:InvokeServer(humanoidInstance, damageDealt, self.constant)
+	local ShotData: ShotData = {
+		hit = hitPos,
+		target = humanoidInstance,
+		headshot = headShot,
+		damage = damageDealt,
+		constant = self.constant,
+	}
+
+	self:CallListeners(shotEventListeners, ShotData)
+	damageEvent:InvokeServer(ShotData, self.buffList)
 end
 
 function WeaponController:Reload()
@@ -132,14 +157,20 @@ function WeaponController:Reload()
 		self.on_reload = true
 		local ammoReceived = self:AmmoCost()
 
-		self.reload_task = task.delay(self.constant.reload_time, function()
+		self:CallListeners(reloadEventListeners, {
+			empty_mag = ammoReceived == self.constant.ammo.mag_size,
+			amount = ammoReceived,
+			constant = self.constant,
+		})
+
+		self.reload_task = task.delay(self.constant.reload_time * self.buffList.reload_time, function()
 			if self.constant.type == "Primary" then
 				self.constant.ammo.reserve_ammo -= ammoReceived
 			end
 
 			self.constant.ammo.current_ammo += ammoReceived
 			self.on_reload = false
-			self.ui_module:UpdateAmmoDisplay()
+			self.ui_module.UpdateAmmoDisplay(self.constant)
 			self.reload_task = nil
 		end)
 	end
@@ -210,10 +241,10 @@ function WeaponController:Shoot(): boolean
 	if self:CanShoot() then
 		self:SetCooldown()
 		self:WasteAmmo()
-		self.ui_module:UpdateAmmoDisplay()
+		self.ui_module.UpdateAmmoDisplay(self.constant)
 
-		for i = 1, self.constant.pellets do
-			local piersingLeft = self.constant.piersing.amount
+		for i = 1, self.constant.pellets + self.buffList.pellets do
+			local piersingLeft = self.constant.piersing.amount * self.buffList.piersing.amount
 			local currentOrigin = camera.CFrame.Position
 			local currentDirection = nil
 			local ignorePrevious = {}
@@ -222,7 +253,7 @@ function WeaponController:Shoot(): boolean
 				local rayInfo: RaycastInfo = self:CastRay(currentOrigin, currentDirection, ignorePrevious)
 
 				if rayInfo.result and rayInfo.result.Instance ~= nil then
-					self:DEBUG_PART(rayInfo.result.Position)
+					--self:DEBUG_PART(rayInfo.result.Position)
 
 					local target = rayInfo.result.Instance.Parent
 					local targetHumanoid: Humanoid = target:FindFirstChild("Humanoid")
@@ -233,16 +264,30 @@ function WeaponController:Shoot(): boolean
 						table.insert(ignorePrevious, target)
 
 						if rayInfo.result.Instance.Name == "Head" then
-							self:DamageTarget(true, targetHumanoid, enemiesPiersed)
+							self:DamageTarget(true, targetHumanoid, enemiesPiersed, currentOrigin)
 							piersingLeft -= 1
 						else
-							self:DamageTarget(false, targetHumanoid, enemiesPiersed)
+							self:DamageTarget(false, targetHumanoid, enemiesPiersed, currentOrigin)
 							piersingLeft -= 1
 						end
 					else
+						self:CallListeners(shotEventListeners, {
+							hit = rayInfo.result.Position,
+							target = nil,
+							headshot = false,
+							damage = 0,
+							constant = self.constant,
+						})
 						piersingLeft = 0
 					end
 				else
+					self:CallListeners(shotEventListeners, {
+						hit = nil,
+						target = nil,
+						headshot = false,
+						damage = 0,
+						constant = self.constant,
+					})
 					piersingLeft = 0
 				end
 			until piersingLeft <= 0
@@ -267,6 +312,12 @@ function WeaponController:SetCooldown()
 	task.delay(self.constant.speed, function()
 		self.on_cooldown = false
 	end)
+end
+
+function WeaponController:CallListeners(listenersList: { Listener }, data)
+	for _, element in pairs(listenersList) do
+		element.method(data)
+	end
 end
 
 return WeaponController

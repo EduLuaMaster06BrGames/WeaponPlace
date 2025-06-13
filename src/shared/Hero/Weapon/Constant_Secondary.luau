@@ -5,6 +5,7 @@ local constant = {
 		current_ammo = 12,
 		mag_size = 12,
 		reserve_ammo = math.huge,
+		max_reserve_ammo = math.huge,
 	},
 	piersing = {
 		strength_loss = 0.75,

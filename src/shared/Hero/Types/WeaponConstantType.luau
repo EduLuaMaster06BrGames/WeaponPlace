@@ -7,6 +7,7 @@ export type Constant = {
 		current_ammo: number,
 		mag_size: number,
 		reserve_ammo: number,
+		max_reserve_ammo: number,
 	},
 	piersing: {
 		strength_loss: number,

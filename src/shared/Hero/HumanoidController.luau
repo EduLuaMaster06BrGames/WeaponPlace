@@ -33,10 +33,6 @@ function humanoidController.UpdateUI(newVal: number?)
 end
 
 function UpdateHealthBar(health, maxHealth)
-	if not healthBar or not healthBar:IsA("Frame") then
-		return
-	end
-
 	local porcentagem = math.clamp(health / maxHealth, 0, 1)
 
 	healthBar.Size = UDim2.new(porcentagem, 0, 0.131, 0)

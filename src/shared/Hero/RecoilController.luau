@@ -3,10 +3,12 @@ local RecoilController = {}
 RecoilController.__index = RecoilController
 
 local constType = require(ReplicatedStorage.Shared.Hero.Types.WeaponConstantType)
+type Constant = constType.Constant
 
-function RecoilController.new(constant: constType.Constant)
+function RecoilController.new(constant: Constant, buffList)
 	local self = {
 		constant = constant,
+		buffList = buffList,
 	}
 
 	setmetatable(self, RecoilController)
@@ -18,9 +20,11 @@ function RecoilController:Remove()
 end
 
 function RecoilController:GetBulletAccuracy(camera: Camera): Vector3
-	local accuracy_X: number = math.random(-self.constant.accuracy * 10, self.constant.accuracy * 10)
-	local accuracy_Y: number = math.random(-self.constant.accuracy * 10, self.constant.accuracy * 10)
-	local accuracy_Z: number = math.random(-self.constant.accuracy * 10, self.constant.accuracy * 10)
+	local currentAccuracy = self.constant.accuracy * self.buffList.accuracy
+
+	local accuracy_X: number = math.random(-currentAccuracy * 10, currentAccuracy * 10)
+	local accuracy_Y: number = math.random(-currentAccuracy * 10, currentAccuracy * 10)
+	local accuracy_Z: number = math.random(-currentAccuracy * 10, currentAccuracy * 10)
 
 	local direction: Vector3 = camera.CFrame.LookVector
 	direction = RotateX(direction, accuracy_X / 10)

@@ -1,7 +1,7 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local camera = workspace.CurrentCamera
-local viewmodels = ReplicatedStorage.Viewmodels
+local viewmodels = ReplicatedStorage.Viewmodels.Weapon
 
 local ViewmodelController = {}
 ViewmodelController.__index = ViewmodelController

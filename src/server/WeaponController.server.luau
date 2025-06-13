@@ -2,25 +2,25 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local events = ReplicatedStorage.Events
 local damageEvent: RemoteFunction = events.OnDamage
 
-local constType = require(ReplicatedStorage.Shared.Hero.Types.WeaponConstantType)
-type Constant = constType.Constant
+local shotDataType = require(ReplicatedStorage.Shared.Events.ShotEvent_Listeners)
+local weaponConstantType = require(ReplicatedStorage.Shared.Hero.Types.WeaponConstantType)
+local weaponBuffs = require(ReplicatedStorage.Shared.Hero.WeaponBuffList)
 
-damageEvent.OnServerInvoke = function(
-	player: Player,
-	humanoidInstance: Humanoid,
-	damageDealt: number,
-	weaponConstant: constType.Constant
-)
+type ShotData = shotDataType.ShotData
+type Constant = weaponConstantType.Constant
+type WeaponBuffs = weaponBuffs.WeaponBuffs
+
+damageEvent.OnServerInvoke = function(player: Player, shotData: ShotData, buffList: WeaponBuffs)
 	if player.Character then
 		local humanoid = player.Character:FindFirstChild("Humanoid")
-		if humanoid and humanoid:IsA("Humanoid") and humanoid.Health > 0 and humanoidInstance.Health > 0 then
-			local critHit = CritHit(weaponConstant)
+		if humanoid and humanoid:IsA("Humanoid") and humanoid.Health > 0 and shotData.target.Health > 0 then
+			local critHit = CritHit(shotData.constant)
 
 			if critHit then
-				damageDealt *= weaponConstant.multiplier.crit
+				shotData.damage *= shotData.constant.multiplier.crit
 			end
 
-			humanoidInstance.Health -= damageDealt
+			shotData.target.Health -= shotData.damage
 			return
 		end
 	end

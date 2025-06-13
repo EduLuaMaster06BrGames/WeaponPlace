@@ -6,6 +6,9 @@ local weaponController = require(ReplicatedStorage.Shared.Hero.WeaponController)
 local constantPrimary = require(ReplicatedStorage.Shared.Hero.Weapon.Constant_Primary)
 local constantSecondary = require(ReplicatedStorage.Shared.Hero.Weapon.Constant_Secondary)
 
+local utilityFolder = ReplicatedStorage.Shared.Hero.Utility
+local utilityController = require(utilityFolder.Default.UtilityController)
+
 local player = Players.LocalPlayer
 local mouse = player:GetMouse()
 local clicking = false
@@ -17,6 +20,22 @@ function ManageInput(input: InputObject)
 		ChangeWeapon(input.KeyCode)
 	elseif input.KeyCode == Enum.KeyCode.R then
 		current_WeaponController:Reload()
+	elseif input.KeyCode == Enum.KeyCode.E then
+		UseUtility()
+	end
+end
+
+function UseUtility()
+	local previousWeaponConstant
+
+	if utilityController.AbleToInicialize() then
+		if current_WeaponController then
+			previousWeaponConstant = current_WeaponController.constant
+			current_WeaponController:Remove()
+			current_WeaponController = nil
+		end
+		utilityController.start()
+		current_WeaponController = weaponController.new(previousWeaponConstant)
 	end
 end
 
@@ -36,9 +55,9 @@ end
 
 function ManageMouseInput()
 	if clicking then
-		if current_WeaponController.constant.mode == "Auto" then
+		if current_WeaponController ~= nil and current_WeaponController.constant.mode == "Auto" then
 			current_WeaponController:Shoot()
-		elseif current_WeaponController.constant.mode == "Semi" then
+		elseif current_WeaponController ~= nil and current_WeaponController.constant.mode == "Semi" then
 			current_WeaponController:Shoot()
 			clicking = false
 		end
