@@ -16,7 +16,6 @@ local emptyReload_Module = {}
 function emptyReload_Module.StartUp(data: ReloadData)
 	if data.empty_mag then
 		if not onGoingBuff_Primary or not onGoingBuff_Secondary then
-			print("EmptyReload from: ", data.constant.type)
 			SetOnGoingBuff(data)
 			local current_BuffList: WeaponBuffs = emptyReload_Module.GetBuffList(data)
 			current_BuffList.reload_time -= 0.9

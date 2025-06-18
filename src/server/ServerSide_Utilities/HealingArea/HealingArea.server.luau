@@ -21,6 +21,7 @@ function CreateHealingArea(player: Player, utilityConstant: UtilityConstant, buf
 	if humanoid and humanoid:IsA("Humanoid") and humanoid.Health > 0 then
 		local newHealingAreaModel = healingAreaModel:Clone()
 		PlaceModel(newHealingAreaModel, character)
+		SetHealingAreaSize(newHealingAreaModel, utilityConstant, buffList)
 		task.spawn(HealingAreaTask, newHealingAreaModel, player, utilityConstantType, buffList)
 		return
 	end
@@ -47,8 +48,18 @@ function PlaceModel(model: Model, character: Model)
 	end
 end
 
+function SetHealingAreaSize(model: Model, utilityConstant: UtilityConstant, buffList: UtilityBuffs)
+	local healPad = model:FindFirstChild("HealPad")
+	local hitbox = model:FindFirstChild("Hitbox")
+	local size = utilityConstant.size * buffList.size
+
+	if healPad:IsA("Part") and hitbox:IsA("Part") then
+		healPad.Size = Vector3.new(healPad.Size.X, size, size)
+		hitbox.Size = Vector3.new(hitbox.Size.X, size, size)
+	end
+end
+
 function HealingAreaTask(model: Model, Player: Player, utilityConstant: UtilityConstant, buffList: UtilityBuffs)
-	print("Task started with model: ", model)
 	local duration = utilityConstant.duration
 	local startedAt = os.clock()
 	local hitbox = model:FindFirstChild("Hitbox")
@@ -63,8 +74,7 @@ function HealingAreaTask(model: Model, Player: Player, utilityConstant: UtilityC
 					or element.Parent.Humanoid.Health == element.Parent.Humanoid.MaxHealth
 				then
 					table.insert(healedPlayers, element.Parent.Name)
-					element.Parent.Humanoid.Health += utilityConstant.power * buffList.power
-					print("Healing: ", element.Parent.Name, " for: ", utilityConstant.power * buffList.power)
+					element.Parent.Humanoid.Health += utilityConstant.healing * buffList.healing
 				else
 					table.insert(healedPlayers, element.Parent.Name)
 				end

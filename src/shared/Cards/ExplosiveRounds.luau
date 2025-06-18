@@ -11,8 +11,6 @@ local explosiveRounds_Module = {
 }
 
 function explosiveRounds_Module.StartUp(data: ShotData)
-	print(data.target)
-
 	if data.hit ~= nil then
 		if data.damage == 0 then
 			data.damage = data.constant.damage / 2

@@ -9,6 +9,11 @@ local constantSecondary = require(ReplicatedStorage.Shared.Hero.Weapon.Constant_
 local utilityFolder = ReplicatedStorage.Shared.Hero.Utility
 local utilityController = require(utilityFolder.Default.UtilityController)
 
+local utilityEvents = ReplicatedStorage.UtilityEvents
+local ammoBox = utilityEvents.AmmoBox
+local ReloadReserve_RF: RemoteFunction = ammoBox.ReloadReserve
+local receiveAmmoEvent: RemoteEvent = utilityEvents.AmmoBox.SendAmmo
+
 local player = Players.LocalPlayer
 local mouse = player:GetMouse()
 local clicking = false
@@ -80,3 +85,23 @@ end)
 
 UserInputService.InputBegan:Connect(ManageInput)
 RunService.RenderStepped:Connect(ManageMouseInput)
+
+function GetReserveAmmo()
+	if current_WeaponController ~= nil then
+		return current_WeaponController.constant.ammo.max_reserve_ammo
+			- current_WeaponController.constant.ammo.reserve_ammo
+	end
+	return nil
+end
+
+function AddToReserve(ammoReceived: number)
+	if current_WeaponController ~= nil then
+		if ammoReceived then
+			current_WeaponController:AddToReserve(ammoReceived)
+		end
+	end
+	return nil
+end
+
+ReloadReserve_RF.OnClientInvoke = GetReserveAmmo
+receiveAmmoEvent.OnClientEvent:Connect(AddToReserve)

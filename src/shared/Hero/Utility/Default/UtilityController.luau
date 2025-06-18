@@ -1,5 +1,5 @@
 local utilityConstant = require(script.Parent.Constant_Utility)
-local utility = require(script.Parent.Parent.HealingArea)
+local utility = require(script.Parent.Parent.AmmoBox)
 
 local UtilityController = {}
 UtilityController.__index = UtilityController

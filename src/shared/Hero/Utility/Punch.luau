@@ -1,6 +1,6 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local utilityEvetns = ReplicatedStorage.UtilityEvents
-local createHealingAreaEvent: RemoteEvent = utilityEvetns.HealingArea.CreateHealingArea
+local createPunchEvent: RemoteEvent = utilityEvetns.Punch.CreatePunch
 
 local utilityConstant = require(script.Parent.Default.Constant_Utility)
 local utilityBuffList = require(script.Parent.Default.UtilityBuffsList)
@@ -14,11 +14,11 @@ function healingArea_Module.RunAction()
 end
 
 function healingArea_Module.RunAnimation()
-	wait(1)
+	wait(0.1)
 end
 
 function healingArea_Module.CallServer()
-	createHealingAreaEvent:FireServer(utilityConstant, utilityBuffList)
+	createPunchEvent:FireServer(utilityConstant, utilityBuffList)
 end
 
 return healingArea_Module

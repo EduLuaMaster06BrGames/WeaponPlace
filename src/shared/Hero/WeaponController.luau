@@ -320,4 +320,9 @@ function WeaponController:CallListeners(listenersList: { Listener }, data)
 	end
 end
 
+function WeaponController:AddToReserve(ammoReceived: number)
+	self.constant.ammo.reserve_ammo += ammoReceived
+	self.ui_module.UpdateAmmoDisplay(self.constant)
+end
+
 return WeaponController

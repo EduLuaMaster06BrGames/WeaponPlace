@@ -10,7 +10,7 @@ local returnAmmo_Module = {
 }
 
 function returnAmmo_Module.StartUp(data: ShotData)
-	if returnAmmo_Module.AmmoReturned() then
+	if data.target ~= nil and returnAmmo_Module.AmmoReturned() then
 		data.constant.ammo.current_ammo += 1
 		UIController.UpdateAmmoDisplay(data.constant)
 	end
