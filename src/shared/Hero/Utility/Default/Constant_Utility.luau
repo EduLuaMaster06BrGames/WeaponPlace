@@ -1,12 +1,12 @@
-local constant = {
-	power = 500,
-	damage = 0,
-	healing = 0.25,
-	duration = 10,
-	speed = 0,
-	size = 20,
-	cooldown = 1,
-	last_use = 0,
+local constant: UtilityConstant = {
+	power = nil,
+	damage = nil,
+	healing = nil,
+	duration = nil,
+	speed = nil,
+	size = nil,
+	cooldown = nil,
+	last_use = nil,
 }
 
 export type UtilityConstant = {

@@ -1,3 +1,5 @@
+-- DISABLED
+
 -- File used for testing, will probably be removed later
 local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -28,3 +30,5 @@ returnAmmoCard.AddAsListener()
 explosiveRounds.AddAsListener()
 
 task.spawn(humanoidController.RegenTask)
+
+-- DISABLED

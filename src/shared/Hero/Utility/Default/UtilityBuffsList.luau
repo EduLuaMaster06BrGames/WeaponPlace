@@ -1,11 +1,11 @@
 local buffs = {
-	power = 1,
-	damage = 1,
-	healing = 1,
-	duration = 1,
-	speed = 1,
-	size = 5,
-	cooldown = 1,
+	power = nil,
+	damage = nil,
+	healing = nil,
+	duration = nil,
+	speed = nil,
+	size = nil,
+	cooldown = nil,
 }
 
 export type UtilityBuffs = {
