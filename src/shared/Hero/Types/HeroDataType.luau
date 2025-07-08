@@ -1,11 +1,9 @@
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UtilityDataType = require(script.Parent.UtilityDataType)
 local HumanoidConstantType = require(script.Parent.HumanoidConstantType)
-local Constant_Humanoid = require(ReplicatedStorage.Shared.Hero.Humanoid.Constant_Humanoid)
-local Constant_Utility = require(ReplicatedStorage.Shared.Hero.Utility.Default.Constant_Utility)
 local WeaponConstantType = require(script.Parent.WeaponConstantType)
 type WeaponConstant = WeaponConstantType.Constant
-type UtilityConstant = Constant_Utility.UtilityConstant
 type HumanoidConstant = HumanoidConstantType.HumanoidConstants
+type UtilityData = UtilityDataType.UtilityData
 
 local module = {}
 
@@ -21,7 +19,7 @@ export type HeroConfig = {
 		secondary: WeaponConstant,
 	},
 	utility_constants: {
-		utility: UtilityConstant,
+		utility: UtilityData,
 	},
 	weapon_viewmodels: {
 		primary: Model,

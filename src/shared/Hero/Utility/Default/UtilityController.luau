@@ -1,5 +1,6 @@
 local utilityConstant = require(script.Parent.Constant_Utility)
 local utilityBuffList = require(script.Parent.UtilityBuffsList)
+local utilityConfig = require(script.Parent.Parent.Utility)
 
 local UtilityController = {}
 UtilityController.__index = UtilityController
@@ -7,7 +8,7 @@ UtilityController.__index = UtilityController
 function UtilityController.start()
 	local self = {
 		viewmodelController = nil,
-		remoteEvent = nil,
+		remoteEvent = utilityConfig.remoteEvent,
 	}
 
 	setmetatable(self, UtilityController)

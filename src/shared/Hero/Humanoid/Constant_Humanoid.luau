@@ -7,11 +7,11 @@ type Listener = HConstantType.Listener
 local listeners: { Listener } = {}
 
 local constant: HConstantType = {
-	MaxHealth = nil,
-	WalkSpeed = nil,
-	BaseRegen = nil,
-	HealingMultiplier = nil,
-	DamageReduction = nil,
+	MaxHealth = 1,
+	WalkSpeed = 16,
+	BaseRegen = 0.01,
+	HealingMultiplier = 1,
+	DamageReduction = 1,
 }
 
 local proxy = {} :: HConstantType

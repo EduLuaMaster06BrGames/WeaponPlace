@@ -3,7 +3,6 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local characterCreationModule = require(script.Parent.CharacterCreation)
 local HeroSelectionUI = Players.LocalPlayer.PlayerGui:WaitForChild("HeroSelection")
-local deployButton: TextButton = HeroSelectionUI:WaitForChild("Deploy_Button")
 
 local heroCreationEvents = ReplicatedStorage.HeroCreationEvents
 local getHeroConfig: RemoteFunction = heroCreationEvents.GetHeroConfig
@@ -31,6 +30,7 @@ function ManageHeroCreation()
 		if heroConfig then
 			SetUpConfig(heroConfig)
 			EnableWeapon()
+			HeroSelectionUI.Enabled = false
 		end
 	end
 end
@@ -64,7 +64,9 @@ function SetUpConstantsConstants(heroConfig: HeroConfig)
 	local newConstants_Secondary = heroConfig.weapon_constants.secondary
 
 	local utilityModule = require(hero.Utility.Default.Constant_Utility)
-	local newConstants_Utility = heroConfig.utility_constants.utility
+	local utilityConfig = require(hero.Utility.Utility)
+	local newConstants_Utility = heroConfig.utility_constants.utility.utilityConstants
+	local newConfig_Utility = heroConfig.utility_constants.utility.utilityConfig
 
 	local humanoidModule = require(hero.Humanoid.Constant_Humanoid)
 	local newConstants_Humanoid = heroConfig.humanoid_constants.humanoid
@@ -75,6 +77,9 @@ function SetUpConstantsConstants(heroConfig: HeroConfig)
 	for key, value in pairs(newConstants_Secondary) do
 		secondaryModule[key] = value
 	end
+	for key, value in pairs(newConfig_Utility) do
+		utilityConfig[key] = value
+	end
 	for key, value in pairs(newConstants_Utility) do
 		utilityModule[key] = value
 	end
@@ -83,7 +88,5 @@ function SetUpConstantsConstants(heroConfig: HeroConfig)
 	end
 end
 
-characterCreationModule.ConnectButton(characterCreationModule.primaryButtons, characterCreationModule.UpdatePrimary)
-characterCreationModule.ConnectButton(characterCreationModule.secondaryButtons, characterCreationModule.UpdateSecondary)
-characterCreationModule.ConnectButton(characterCreationModule.utilityButtons, characterCreationModule.UpdateUtility)
-deployButton.MouseButton1Click:Connect(ManageHeroCreation)
+characterCreationModule.SetViewportCameras()
+characterCreationModule.SetClosures()

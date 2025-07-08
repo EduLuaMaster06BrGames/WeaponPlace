@@ -4,6 +4,7 @@ local ViewmodelController: {} = require(script.Parent.WeaponViewmodelController)
 local UIController: {} = require(script.Parent.UIController)
 local RecoilController = require(script.Parent.RecoilController)
 local weaponBuffs = require(script.Parent.WeaponBuffList)
+local ignoreList = require(script.Parent.WeaponIgnoreList)
 
 local constType = require(ReplicatedStorage.Shared.Hero.Types.WeaponConstantType)
 
@@ -110,6 +111,7 @@ function WeaponController:CastRay(origin: Vector3, direction, ignorePrevious: {}
 		viewmodel_Primary,
 		viewmodel_Secondary,
 		ignorePrevious,
+		ignoreList,
 	}
 
 	if not direction then

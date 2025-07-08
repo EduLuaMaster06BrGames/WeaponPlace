@@ -22,7 +22,7 @@ function CreateHealingArea(player: Player, utilityConstant: UtilityConstant, buf
 		local newHealingAreaModel = healingAreaModel:Clone()
 		PlaceModel(newHealingAreaModel, character)
 		SetHealingAreaSize(newHealingAreaModel, utilityConstant, buffList)
-		task.spawn(HealingAreaTask, newHealingAreaModel, player, utilityConstantType, buffList)
+		task.spawn(HealingAreaTask, newHealingAreaModel, player, utilityConstant, buffList)
 		return
 	end
 end
@@ -60,6 +60,8 @@ function SetHealingAreaSize(model: Model, utilityConstant: UtilityConstant, buff
 end
 
 function HealingAreaTask(model: Model, Player: Player, utilityConstant: UtilityConstant, buffList: UtilityBuffs)
+	print("--")
+	print(utilityConstant)
 	local duration = utilityConstant.duration
 	local startedAt = os.clock()
 	local hitbox = model:FindFirstChild("Hitbox")
